@@ -19,6 +19,9 @@ func (c *cache) IsValid() bool {
 }
 
 func (c *cache) GetAll() []entities.User {
+	c.lock()
+	defer c.unlock()
+	
 	return c.users
 }
 
