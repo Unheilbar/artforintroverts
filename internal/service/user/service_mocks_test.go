@@ -63,18 +63,48 @@ func (mr *MockStorageMockRecorder) GetAll() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockStorage)(nil).GetAll))
 }
 
-// Update mocks base method.
-func (m *MockStorage) Update(ID string, user entities.User) error {
+// GetById mocks base method.
+func (m *MockStorage) GetById(ID string) (entities.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ID, user)
+	ret := m.ctrl.Call(m, "GetById", ID)
+	ret0, _ := ret[0].(entities.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetById indicates an expected call of GetById.
+func (mr *MockStorageMockRecorder) GetById(ID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetById", reflect.TypeOf((*MockStorage)(nil).GetById), ID)
+}
+
+// Save mocks base method.
+func (m *MockStorage) Save(arg0 entities.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Save", arg0)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Update indicates an expected call of Update.
-func (mr *MockStorageMockRecorder) Update(ID, user interface{}) *gomock.Call {
+// Save indicates an expected call of Save.
+func (mr *MockStorageMockRecorder) Save(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockStorage)(nil).Update), ID, user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Save", reflect.TypeOf((*MockStorage)(nil).Save), arg0)
+}
+
+// UpdateAndReturn mocks base method.
+func (m *MockStorage) UpdateAndReturn(ID string, user entities.User) (entities.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateAndReturn", ID, user)
+	ret0, _ := ret[0].(entities.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateAndReturn indicates an expected call of UpdateAndReturn.
+func (mr *MockStorageMockRecorder) UpdateAndReturn(ID, user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAndReturn", reflect.TypeOf((*MockStorage)(nil).UpdateAndReturn), ID, user)
 }
 
 // MockCache is a mock of Cache interface.
@@ -100,56 +130,43 @@ func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 	return m.recorder
 }
 
-// GetAll mocks base method.
-func (m *MockCache) GetAll() []entities.User {
+// Delete mocks base method.
+func (m *MockCache) Delete(key string) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll")
-	ret0, _ := ret[0].([]entities.User)
-	return ret0
+	m.ctrl.Call(m, "Delete", key)
 }
 
-// GetAll indicates an expected call of GetAll.
-func (mr *MockCacheMockRecorder) GetAll() *gomock.Call {
+// Delete indicates an expected call of Delete.
+func (mr *MockCacheMockRecorder) Delete(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockCache)(nil).GetAll))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockCache)(nil).Delete), key)
 }
 
-// IsValid mocks base method.
-func (m *MockCache) IsValid() bool {
+// Get mocks base method.
+func (m *MockCache) Get(key string) (entities.User, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsValid")
-	ret0, _ := ret[0].(bool)
-	return ret0
+	ret := m.ctrl.Call(m, "Get", key)
+	ret0, _ := ret[0].(entities.User)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
 }
 
-// IsValid indicates an expected call of IsValid.
-func (mr *MockCacheMockRecorder) IsValid() *gomock.Call {
+// Get indicates an expected call of Get.
+func (mr *MockCacheMockRecorder) Get(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsValid", reflect.TypeOf((*MockCache)(nil).IsValid))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockCache)(nil).Get), key)
 }
 
-// SetInvalid mocks base method.
-func (m *MockCache) SetInvalid() {
+// Set mocks base method.
+func (m *MockCache) Set(user entities.User) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetInvalid")
+	m.ctrl.Call(m, "Set", user)
 }
 
-// SetInvalid indicates an expected call of SetInvalid.
-func (mr *MockCacheMockRecorder) SetInvalid() *gomock.Call {
+// Set indicates an expected call of Set.
+func (mr *MockCacheMockRecorder) Set(user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetInvalid", reflect.TypeOf((*MockCache)(nil).SetInvalid))
-}
-
-// SetValid mocks base method.
-func (m *MockCache) SetValid() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetValid")
-}
-
-// SetValid indicates an expected call of SetValid.
-func (mr *MockCacheMockRecorder) SetValid() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetValid", reflect.TypeOf((*MockCache)(nil).SetValid))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Set", reflect.TypeOf((*MockCache)(nil).Set), user)
 }
 
 // MockStorageProvider is a mock of StorageProvider interface.

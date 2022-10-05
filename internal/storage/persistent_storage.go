@@ -7,6 +7,7 @@ import (
 	"github.com/unheilbar/artforintrovert_entry_task/internal/entities"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type persistentStorage struct {
@@ -42,10 +43,45 @@ func (ps *persistentStorage) Delete(ID string) error {
 	return nil
 }
 
-func (ps *persistentStorage) Update(ID string, user entities.User) error {
+func (ps *persistentStorage) UpdateAndReturn(ID string, user entities.User) (entities.User, error) {
 	filter := prepareFilter(ID)
 	update := prepareUpdate(user)
-	_, err := ps.collection.UpdateOne(context.Background(), filter, update)
+	after := options.After
+	res := ps.collection.FindOneAndUpdate(context.Background(), filter, update,
+		&options.FindOneAndUpdateOptions{ReturnDocument: &after})
+
+	if err := res.Err(); err != nil {
+		return entities.User{}, res.Err()
+	}
+
+	var updated entities.User
+	err := res.Decode(&updated)
+
+	return updated, err
+}
+
+func (ps *persistentStorage) GetById(ID string) (entities.User, error) {
+	filter := prepareFilter(ID)
+
+	res := ps.collection.FindOne(context.Background(), filter)
+
+	if err := res.Err(); err != nil {
+		return entities.User{}, res.Err()
+	}
+
+	var user entities.User
+	err := res.Decode(&user)
+
+	return user, err
+}
+
+func (ps *persistentStorage) Save(user entities.User) error {
+	buser, err := bson.Marshal(user)
+	if err != nil {
+		return err
+	}
+
+	_, err = ps.collection.InsertOne(context.Background(), buser)
 
 	return err
 }

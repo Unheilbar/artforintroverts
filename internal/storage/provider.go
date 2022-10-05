@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"sync"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -21,25 +22,33 @@ func (p *Provider) Storage() *persistentStorage {
 
 func NewStorageProvider(client *mongo.Client, dbName string, collectionName string) *Provider {
 	collection := client.Database(dbName).Collection(collectionName)
-	return &Provider{
+
+	provider := &Provider{
 		collection: collection,
-		cache: &cache{
-			mx: &sync.Mutex{},
-		},
 	}
+
+	provider.initCache()
+
+	return provider
 }
 
-func (p *Provider) RefreshCache() error {
-	if p.cache.IsValid() {
-		return nil
-	}
-	p.cache.lock()
-	defer p.cache.unlock()
+func (p *Provider) initCache() {
 	users, err := p.Storage().GetAll()
 	if err != nil {
-		return err
+		fmt.Printf("err accured during cache init operation %s", err)
 	}
 
-	p.cache.refresh(users)
-	return nil
+	cap := uint(len(users))
+	cache := &cache{
+		mx:       &sync.Mutex{},
+		capacity: cap,
+		users:    make(map[string]*node, cap),
+		queue:    &linkedList{size: 0},
+	}
+
+	for _, user := range users {
+		cache.Set(user)
+	}
+
+	p.cache = cache
 }

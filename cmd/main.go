@@ -10,18 +10,12 @@ import (
 	adapter "github.com/unheilbar/artforintrovert_entry_task/internal/adapters"
 	"github.com/unheilbar/artforintrovert_entry_task/internal/api"
 	"github.com/unheilbar/artforintrovert_entry_task/internal/config"
-	"github.com/unheilbar/artforintrovert_entry_task/internal/scheduler"
 	"github.com/unheilbar/artforintrovert_entry_task/internal/server"
 	"github.com/unheilbar/artforintrovert_entry_task/internal/service/user"
 	"github.com/unheilbar/artforintrovert_entry_task/internal/storage"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
-
-// TODO
-// config
-// structure
-// bd connection
 
 func main() {
 	config, err := config.LoadConfig(".")
@@ -42,10 +36,6 @@ func main() {
 
 	provider := storage.NewStorageProvider(mongoClient, config.DbName, config.CollectionName)
 
-	ctx, cancel := context.WithCancel(context.Background())
-
-	go scheduler.RunRefreshJob(ctx, provider.RefreshCache, config.CacheRefreshInterval)
-
 	storageProvider := adapter.NewStorageProviderAdapter(provider)
 
 	service := user.NewService(storageProvider)
@@ -61,7 +51,6 @@ func main() {
 	select {
 	case <-signals:
 		fmt.Println("main: got terminate signal. Shutting down...", nil)
-		cancel()
 	case <-serverErrChan:
 		fmt.Println("main: got server err signal. Shutting down...", nil)
 	}

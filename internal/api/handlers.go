@@ -13,6 +13,8 @@ type service interface {
 	GetAll() ([]entities.User, error)
 	Delete(ID string) error
 	Update(ID string, user entities.User) error
+	Save(entities.User) error
+	GetById(ID string) (entities.User, error)
 }
 
 type handlers struct {
@@ -22,12 +24,15 @@ type handlers struct {
 func NewHandlers(service service) *handlers {
 	return &handlers{service: service}
 }
+
 func (h *handlers) GetRouter() *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Get("/user", h.getAllUsers)
+	router.Get("/user/{user_id}", h.getUserById)
 	router.Put("/user/{user_id}", h.updateUser)
 	router.Delete("/user/{user_id}", h.deleteUser)
+	router.Post("/user", h.saveUser)
 
 	return router
 }
@@ -43,6 +48,20 @@ func (h *handlers) getAllUsers(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(users)
+}
+
+func (h *handlers) getUserById(w http.ResponseWriter, r *http.Request) {
+	userID := chi.URLParam(r, "user_id")
+
+	user, err := h.service.GetById(userID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error handling request, %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
 }
 
 func (h *handlers) updateUser(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +87,24 @@ func (h *handlers) deleteUser(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "user_id")
 
 	err := h.service.Delete(userID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error handling request, %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *handlers) saveUser(w http.ResponseWriter, r *http.Request) {
+	var user entities.User
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil || user.ID == "" {
+		http.Error(w, fmt.Sprintf("error parsing request body, %v", err), http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.Save(user)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("error handling request, %v", err), http.StatusInternalServerError)
 		return

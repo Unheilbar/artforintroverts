@@ -1,46 +1,161 @@
 package storage
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/unheilbar/artforintrovert_entry_task/internal/entities"
 )
 
 type cache struct {
-	isValid bool
-	mx      *sync.Mutex
-	users   []entities.User
+	mx       *sync.Mutex
+	capacity uint
+	users    map[string]*node
+	queue    *linkedList
 }
 
-func (c *cache) IsValid() bool {
+type node struct {
+	key  string
+	val  entities.User
+	prev *node
+	next *node
+}
+
+// linked list itself isn't thread safe,
+type linkedList struct {
+	tail *node
+	head *node
+	size uint
+}
+
+func (c *cache) Delete(ID string) {
 	c.lock()
 	defer c.unlock()
-	return c.isValid
+	rmNode, ok := c.users[ID]
+	if !ok {
+		fmt.Println("cache miss delete")
+		return
+	}
+
+	c.queue.rmNode(rmNode)
+	delete(c.users, ID)
+	c.debugShowCache("delete")
 }
 
-func (c *cache) GetAll() []entities.User {
+func (c *cache) Get(ID string) (entities.User, bool) {
 	c.lock()
 	defer c.unlock()
-	
-	return c.users
+	userNode, ok := c.users[ID]
+	if !ok {
+		fmt.Println("cache miss get")
+		return entities.User{}, false
+	}
+
+	c.queue.moveToEnd(userNode)
+	c.debugShowCache("get")
+	return userNode.val, true
 }
 
-func (c *cache) SetInvalid() {
+func (c *cache) Set(user entities.User) {
 	c.lock()
-	c.isValid = false
-	c.unlock()
+	defer c.unlock()
+	userNode, ok := c.users[user.ID]
+	if ok {
+		userNode.val = user
+		c.queue.moveToEnd(userNode)
+		c.debugShowCache("update")
+		return
+	}
+
+	if c.capacity == c.queue.size {
+		key := c.purge()
+		delete(c.users, key)
+	}
+
+	userNode = &node{key: user.ID, val: user}
+	c.users[user.ID] = userNode
+	c.queue.addToEnd(userNode)
+	c.debugShowCache("insert")
 }
 
-func (c *cache) SetValid() {
-	c.lock()
-	c.isValid = true
-	c.unlock()
+func (ll *linkedList) removeFirst() {
+	ll.size--
+
+	if ll.head == nil {
+		return
+	}
+
+	if ll.head == ll.tail {
+		ll.head = nil
+		ll.tail = nil
+		return
+	}
+
+	ll.head = ll.head.next
+	ll.head.prev = nil
 }
 
-// cache should be locked outside this method
-func (c *cache) refresh(users []entities.User) {
-	c.users = users
-	c.isValid = true
+func (ll *linkedList) moveToEnd(n *node) {
+	ll.rmNode(n)
+	ll.addToEnd(n)
+}
+
+func (ll *linkedList) rmNode(n *node) {
+	if n.prev != nil {
+		n.prev.next = n.next
+	}
+
+	if n.next != nil {
+		n.next.prev = n.prev
+	}
+
+	if ll.tail == n {
+		ll.tail = n.prev
+	}
+
+	if ll.head == n {
+		ll.head = n.next
+	}
+
+	ll.size--
+}
+
+func (ll *linkedList) addToEnd(n *node) {
+	ll.size++
+
+	if ll.head == nil {
+		ll.head = n
+		ll.tail = n
+		return
+	}
+
+	n.prev = ll.tail
+	ll.tail.next = n
+	ll.tail = n
+}
+
+func (c *cache) purge() string {
+	key := c.queue.head.key
+
+	c.queue.removeFirst()
+	c.debugShowCache("purge")
+	return key
+}
+
+func (c *cache) debugShowCache(method string) {
+	return
+	fmt.Println("=== cache ===")
+	fmt.Println("method ==> ", method)
+	fmt.Println("size ==> ", c.queue.size)
+	n := c.queue.head
+	if n == nil {
+		return
+	}
+	for n.next != nil {
+		fmt.Println("user ==> ", n.key, n.val.Nickname)
+		n = n.next
+	}
+	fmt.Println("user ==> ", n.key, n.val.Nickname)
 }
 
 func (c *cache) lock() {
