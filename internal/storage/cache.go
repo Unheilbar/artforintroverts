@@ -39,7 +39,6 @@ func (c *cache) Delete(ID string) {
 
 	c.queue.rmNode(rmNode)
 	delete(c.users, ID)
-	c.debugShowCache("delete")
 }
 
 func (c *cache) Get(ID string) (entities.User, bool) {
@@ -52,7 +51,6 @@ func (c *cache) Get(ID string) (entities.User, bool) {
 	}
 
 	c.queue.moveToEnd(userNode)
-	c.debugShowCache("get")
 	return userNode.val, true
 }
 
@@ -63,7 +61,6 @@ func (c *cache) Set(user entities.User) {
 	if ok {
 		userNode.val = user
 		c.queue.moveToEnd(userNode)
-		c.debugShowCache("update")
 		return
 	}
 
@@ -75,7 +72,6 @@ func (c *cache) Set(user entities.User) {
 	userNode = &node{key: user.ID, val: user}
 	c.users[user.ID] = userNode
 	c.queue.addToEnd(userNode)
-	c.debugShowCache("insert")
 }
 
 func (ll *linkedList) removeFirst() {
@@ -138,24 +134,7 @@ func (c *cache) purge() string {
 	key := c.queue.head.key
 
 	c.queue.removeFirst()
-	c.debugShowCache("purge")
 	return key
-}
-
-func (c *cache) debugShowCache(method string) {
-	return
-	fmt.Println("=== cache ===")
-	fmt.Println("method ==> ", method)
-	fmt.Println("size ==> ", c.queue.size)
-	n := c.queue.head
-	if n == nil {
-		return
-	}
-	for n.next != nil {
-		fmt.Println("user ==> ", n.key, n.val.Nickname)
-		n = n.next
-	}
-	fmt.Println("user ==> ", n.key, n.val.Nickname)
 }
 
 func (c *cache) lock() {
